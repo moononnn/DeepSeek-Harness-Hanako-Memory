@@ -1,0 +1,6 @@
+# dsh bundle patch: inserts the assistant-manager plugin into a profile's
+# layer stack (host plane — it must be composed globally, not per-preset,
+# because preset-mounted plugins cannot register web routes / settings UI).
+- insert:
+    - id: assistant-manager
+      name: 'dsh-assistant-manager'

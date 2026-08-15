@@ -1,0 +1,788 @@
+/* dsh-assistant-manager 前端样式：Hana AgentTab 还原（米色系） */
+:root {
+  --bg: #f5efe4;
+  --bg-card: #fbf7ee;
+  --sidebar-bg: #efe8db;
+  --text: #2a2622;
+  --text-light: #4a433c;
+  --text-muted: #6b6158;
+  --accent: #537d96;
+  --accent-hover: #3f6179;
+  --accent-light: rgba(83, 125, 150, 0.1);
+  --border: #d8cfbe;
+  --danger: #8b2c1f;
+  --overlay-strong: rgba(42, 38, 34, 0.35);
+  --card-size: 62px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+}
+
+.page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 28px 20px 60px;
+}
+
+.page-head h1 {
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 600;
+}
+.page-sub {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ---------- 卡片堆叠 ---------- */
+.stack-zone {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 26px 18px 18px;
+  overflow-x: auto;
+}
+
+.card-stack {
+  display: flex;
+  align-items: flex-end;
+  min-height: calc(var(--card-size) + 34px);
+  padding: 6px 8px 4px;
+  cursor: pointer;
+}
+
+.agent-card {
+  flex: 0 0 auto;
+  width: var(--card-size);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.agent-card .thumb {
+  width: var(--card-size);
+  height: var(--card-size);
+  border-radius: 14px;
+  object-fit: cover;
+  border: 2px solid var(--bg-card);
+  box-shadow: 0 2px 6px rgba(42, 38, 34, 0.18);
+  background: var(--sidebar-bg);
+  transition: box-shadow 0.2s;
+}
+.agent-card:hover .thumb { box-shadow: 0 4px 10px rgba(42, 38, 34, 0.28); }
+.agent-card.selected .thumb {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-light), 0 4px 10px rgba(42, 38, 34, 0.22);
+}
+
+.agent-card .cname {
+  font-size: 11px;
+  color: var(--text-light);
+  max-width: 74px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* 主助手徽章 */
+.agent-card .badge {
+  position: absolute;
+  top: -3px;
+  right: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #e8a0a0;
+  border: 2px solid var(--bg-card);
+}
+
+/* 「+」新建卡 */
+.add-card {
+  width: var(--card-size);
+  height: var(--card-size);
+  border-radius: 14px;
+  border: 2px dashed var(--accent);
+  background: var(--accent-light);
+  color: var(--accent);
+  font-size: 30px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+}
+.agent-card.add-card-item:hover .add-card {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* 「+」卡的占位名字标签：不可见但撑起高度，与助手卡片对齐 */
+.add-card-item .cname {
+  visibility: hidden;
+  height: 14px;
+  line-height: 14px;
+}
+
+/* 卡片横向排布（无扇形展开） */
+
+.stack-hint {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ---------- 选中详情 ---------- */
+.agent-detail {
+  margin-top: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 18px;
+}
+.detail-row { display: flex; align-items: center; gap: 14px; }
+.detail-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 2px solid var(--border);
+}
+.detail-name { font-size: 16px; font-weight: 600; }
+.detail-meta { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+.detail-hint { font-size: 12px; color: var(--text-muted); margin: 12px 0 0; }
+
+/* ---------- 新建对话框 ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  background: var(--overlay-strong);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.overlay-card {
+  width: 380px;
+  max-width: 100%;
+  background: var(--bg-card);
+  border-radius: 18px;
+  padding: 22px 22px 18px;
+  box-shadow: 0 18px 50px rgba(42, 38, 34, 0.35);
+}
+.overlay-card h2 { margin: 0 0 14px; font-size: 18px; }
+
+.name-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  background: #fff;
+  color: var(--text);
+  outline: none;
+}
+.name-input:focus { border-color: var(--accent); }
+
+.yuan-label {
+  margin: 16px 0 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.yuan-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.yuan-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.yuan-chip:hover { border-color: var(--accent); }
+.yuan-chip.selected {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+.yuan-chip img {
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  object-fit: cover;
+}
+.yuan-chip .ykey { font-size: 12px; font-weight: 600; color: var(--text); }
+.yuan-chip .ydesc {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.3;
+}
+
+.import-slot {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1.5px dashed var(--border);
+  border-radius: 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.overlay-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+.btn {
+  padding: 8px 18px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-light);
+}
+.btn-ghost:hover { background: rgba(42, 38, 34, 0.06); }
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* ---------- toast ---------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 42px;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-size: 14px;
+  box-shadow: 0 6px 20px rgba(42, 38, 34, 0.3);
+  z-index: 200;
+  animation: toast-in 0.22s ease-out;
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.hidden { display: none !important; }
+
+/* ================================================================ */
+/* Phase 2：编辑区（名字 / 模型胶囊 / 元选择器 / 身份·人格 / 记忆 / 经验） */
+/* ================================================================ */
+
+/* ---------- 名字输入 ---------- */
+.detail-name-input {
+  width: 100%;
+  max-width: 320px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  background: #fff;
+  color: var(--text);
+  outline: none;
+}
+.detail-name-input:focus { border-color: var(--accent); }
+.name-hint { margin: 8px 0 0; font-size: 12px; color: var(--text-muted); }
+
+/* ---------- 分节 ---------- */
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 26px 0 8px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+.section-head h2 { margin: 0; font-size: 15px; font-weight: 600; }
+.eff-hint { font-size: 12px; color: var(--text-muted); }
+
+.field-block { margin-top: 14px; }
+.field-label { font-size: 13px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; }
+.field-hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+
+.text-area {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  font-family: inherit;
+  background: #fff;
+  color: var(--text);
+  outline: none;
+  resize: vertical;
+}
+.text-area:focus { border-color: var(--accent); }
+.rows-3 { min-height: 84px; }
+.rows-10 { min-height: 220px; }
+
+/* ---------- 保存行 ---------- */
+.save-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+.save-status { font-size: 12px; color: var(--accent); }
+
+/* ---------- 元选择器（Hana 3.5：三 chip + kong 横幅） ---------- */
+.yuan-hint { margin: 4px 0 10px; font-size: 12px; color: var(--text-muted); }
+.yuan-editor { display: flex; flex-direction: column; gap: 10px; }
+
+.edit-chip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+.edit-chip:hover { border-color: var(--accent); }
+.edit-chip.selected {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+.edit-chip img {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex: none;
+}
+.echip-info { flex: 1; min-width: 0; }
+.echip-info .ykey { font-size: 13px; font-weight: 600; color: var(--text); }
+.echip-info .ydesc { font-size: 12px; color: var(--text-muted); margin-top: 2px; line-height: 1.35; }
+
+.thought-tag {
+  flex: none;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #efe3d0;
+  color: #7a6242;
+  border: 1px solid #e0cfb4;
+}
+
+.kong-banner {
+  position: relative;
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  background: var(--sidebar-bg);
+  font-family: inherit;
+  text-align: left;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.kong-banner:hover { border-color: var(--accent); }
+.kong-banner.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-light);
+}
+.kong-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.85;
+}
+.kong-text {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 14px 16px;
+}
+.kong-key { font-size: 14px; font-weight: 700; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55); }
+.kong-desc { font-size: 12px; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55); }
+
+/* ---------- 开关 ---------- */
+.switch-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.switch-label { font-size: 13px; font-weight: 600; color: var(--text-light); }
+
+.switch {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border: none;
+  border-radius: 999px;
+  background: #cfc6b6;
+  cursor: pointer;
+  transition: background 0.18s;
+  flex: none;
+}
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(42, 38, 34, 0.3);
+  transition: transform 0.18s;
+}
+.switch.on { background: var(--accent); }
+.switch.on::after { transform: translateX(18px); }
+.switch:disabled { opacity: 0.55; cursor: default; }
+
+/* ---------- 置顶记忆 ---------- */
+.pins-block { margin-top: 16px; }
+.pin-add-row { display: flex; gap: 8px; margin-top: 8px; }
+.pin-input { flex: 1; }
+.pin-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pin-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.pin-content {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pin-del {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  line-height: 1;
+}
+.pin-del:hover { background: rgba(139, 44, 31, 0.1); color: var(--danger); }
+.pin-empty { font-size: 12px; color: var(--text-muted); padding: 6px 2px; }
+
+/* ---------- 经验区 ---------- */
+.experience-paused {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.experience-categories { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.exp-block {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+.exp-block summary {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+  cursor: pointer;
+  user-select: none;
+}
+.exp-entries {
+  margin: 8px 0 2px;
+  padding-left: 18px;
+  font-size: 12px;
+  color: var(--text-light);
+  line-height: 1.7;
+}
+.exp-empty { font-size: 12px; color: var(--text-muted); padding: 6px 2px; }
+
+/* ================================================================ */
+/* Phase 3：头像（上传/移除）/ 操作按钮行（设主助手/排序/删除）/ 删除确认框 */
+/* ================================================================ */
+
+/* ---------- 常驻提示条（Phase 4：配置修改新会话生效，即时操作区分） ---------- */
+.session-note {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+  background: var(--accent-light);
+  font-size: 12.5px;
+  color: var(--text-light);
+  line-height: 1.7;
+}
+.session-note strong { color: var(--text); font-weight: 600; }
+
+/* ---------- 记忆快照只读展示（Phase 4，§3.6） ---------- */
+.memory-snapshot {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+}
+.memory-snapshot > summary {
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+  cursor: pointer;
+  user-select: none;
+}
+.memory-snapshot > summary:hover { color: var(--accent); }
+.memory-snapshot .ms-sub { font-size: 11px; font-weight: 400; color: var(--text-muted); }
+.memory-snapshot-body {
+  padding: 4px 14px 14px;
+  border-top: 1px dashed var(--border);
+}
+.ms-block { margin-top: 12px; }
+.ms-block-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: 6px;
+}
+.ms-pre {
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: ui-monospace, Consolas, "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 260px;
+  overflow: auto;
+}
+.ms-facts {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: var(--accent-light);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text-light);
+}
+.ms-subhead {
+  margin: 14px 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-light);
+}
+.ms-summary-item {
+  margin-top: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+}
+.ms-summary-item summary {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text-light);
+  cursor: pointer;
+  user-select: none;
+  font-family: ui-monospace, Consolas, "Courier New", monospace;
+}
+.ms-summary-item summary:hover { color: var(--accent); }
+.ms-summary-item .ms-pre { border: none; border-top: 1px dashed var(--border); border-radius: 0 0 8px 8px; background: var(--bg); }
+.ms-empty { font-size: 12px; color: var(--text-muted); padding: 8px 2px; }
+
+/* ---------- 头像：更换 + 移除 ---------- */
+.avatar-wrap { position: relative; flex: none; }
+.detail-avatar { cursor: pointer; }
+.detail-avatar:hover { border-color: var(--accent); }
+
+.remove-avatar-btn {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: var(--danger);
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(42, 38, 34, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.remove-avatar-btn:hover { background: #6d2218; }
+
+/* ---------- 操作按钮行 ---------- */
+.agent-ops {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+}
+.op-btn { padding: 6px 14px; font-size: 13px; }
+.op-btn:disabled { opacity: 0.45; cursor: default; }
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}
+.btn-danger:hover { background: #6d2218; }
+.btn-danger:disabled { opacity: 0.55; cursor: default; }
+
+/* ---------- 删除确认框 ---------- */
+.delete-card { width: 400px; }
+.delete-warn {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(139, 44, 31, 0.35);
+  border-radius: 10px;
+  background: rgba(139, 44, 31, 0.07);
+  color: var(--danger);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.delete-card .field-label { margin-top: 4px; }
+#delete-confirm-name { font-weight: 700; color: var(--danger); }
+
+/* ================================================================ */
+/* Phase 5：头像裁剪器（CropOverlay）——选图后先裁剪，确认后才上传 */
+/* ================================================================ */
+
+.crop-card { width: 340px; }
+
+/* 裁剪舞台：深底 + 白框，框内即裁剪区域（正方形，头像最终为方） */
+.crop-stage {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  margin: 0 auto;
+  background: #23201c;
+  border-radius: 12px;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+}
+.crop-stage.dragging { cursor: grabbing; }
+
+#crop-img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: none;
+  touch-action: none;
+  cursor: grab;
+  -webkit-user-drag: none;
+}
+
+/* 裁剪框描边：视觉上框住裁剪区域，不拦截图片的拖动事件 */
+.crop-frame {
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  border-radius: 10px;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+.crop-hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.crop-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+.crop-zoom-btn {
+  width: 34px;
+  height: 30px;
+  padding: 0;
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.crop-zoom-label {
+  min-width: 52px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+}
+.crop-size-label {
+  margin-left: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<title>助手管理</title>
+<link rel="stylesheet" href="/assistant-manager/app.css">
+</head>
+<body>
+<main class="page">
+  <header class="page-head">
+    <h1>助手配置</h1>
+    <p class="page-sub">卡片横向排布 · 点击切换 · 点击已选卡片换头像 · 删除/设主助手/排序</p>
+  </header>
+
+  <!-- 卡片堆叠区 -->
+  <section class="stack-zone">
+    <div id="card-stack" class="card-stack" aria-label="助手卡片"></div>
+    <div id="stack-hint" class="stack-hint">点击卡片编辑 · 点击「+」新建助手</div>
+  </section>
+
+  <!-- 选中助手详情 + 编辑区（Phase 2） -->
+  <section id="agent-detail" class="agent-detail hidden">
+
+    <!-- 常驻提示条（Phase 4）：配置修改新会话生效；即时类操作立即生效，文案区分（§10.10） -->
+    <div class="session-note" role="note">
+      <strong>配置修改（名字 / 身份 / 人格 / 元 / 记忆与经验开关）会在新会话生效</strong>，
+      当前会话不受影响。头像更换、排序、设主助手、删除是即时生效的。
+    </div>
+
+    <!-- 名字 + 模型行 -->
+    <div class="detail-row">
+      <div class="avatar-wrap">
+        <img id="detail-avatar" class="detail-avatar" alt="" title="点击更换头像">
+        <button id="remove-avatar-btn" class="remove-avatar-btn hidden" title="移除头像，恢复元默认头像">✕</button>
+      </div>
+      <div class="detail-text">
+        <input id="detail-name" class="detail-name-input" type="text" maxlength="24" autocomplete="off" title="回车保存名字">
+        <div class="detail-meta" id="detail-meta"></div>
+      </div>
+    </div>
+    <div class="name-hint">回车保存名字 · 点击头像或已选卡片可更换头像 · 只影响此后新建的会话</div>
+
+    <!-- 操作按钮行（Phase 3：设主助手 / 上移 / 下移 / 删除助手） -->
+    <div id="agent-ops" class="agent-ops"></div>
+
+    <!-- 模型胶囊（只读展示，§3.4） -->
+    <div class="field-block">
+      <div class="field-label">Ta 的模型</div>
+      <div id="model-capsule" class="model-capsule" title="新会话默认模型">
+        <span id="model-name">加载中…</span>
+      </div>
+      <div class="field-hint">Ta 在对话与工作中使用的模型（当前为全局默认，随 dsh 设置变化）</div>
+    </div>
+
+    <!-- 关于 Ta -->
+    <div class="section-head">
+      <h2>关于 Ta</h2>
+      <span class="eff-hint">配置保存后，新建会话才生效</span>
+    </div>
+    <p class="yuan-hint">「元」是助手的潜意识，以此为基础搭建你独一无二的伙伴</p>
+
+    <div id="yuan-editor" class="yuan-editor">
+      <!-- 三个 chip（butter/hanako/ming）+ kong 横幅（Hana 3.5） -->
+    </div>
+
+    <div class="field-block">
+      <label class="field-label" for="identity-input">身份简介</label>
+      <textarea id="identity-input" class="text-area rows-3" placeholder="简短描述助手是谁、擅长什么…"></textarea>
+      <div class="field-hint">简短描述助手是谁、擅长什么。其他助手通过这段文字认识 Ta</div>
+    </div>
+
+    <div class="field-block">
+      <label class="field-label" for="persona-input">意识</label>
+      <textarea id="persona-input" class="text-area rows-10" placeholder="定义助手的性格、语气和行为方式…"></textarea>
+      <div class="field-hint">定义助手的性格、语气和行为方式。跟「元」是分开的，互不影响。</div>
+    </div>
+
+    <div class="save-row">
+      <button id="save-ta" class="btn btn-primary">保存</button>
+      <span id="save-ta-status" class="save-status"></span>
+    </div>
+
+    <!-- 记忆区 -->
+    <div class="section-head">
+      <h2>记忆</h2>
+    </div>
+    <div class="switch-row">
+      <span class="switch-label">记忆</span>
+      <button id="memory-switch" class="switch" role="switch" aria-checked="false"></button>
+      <span class="field-hint">记忆总开关：默认开启</span>
+    </div>
+
+    <div class="pins-block">
+      <div class="field-label">置顶记忆</div>
+      <div class="field-hint">你主动告诉助手一定要记住的东西，也可以手动编辑与添加</div>
+      <div class="pin-add-row">
+        <input id="pin-input" class="name-input pin-input" type="text" maxlength="200" placeholder="输入要记住的内容…" autocomplete="off">
+        <button id="pin-add" class="btn btn-primary">添加</button>
+      </div>
+      <ul id="pin-list" class="pin-list"></ul>
+    </div>
+
+    <!-- 记忆快照只读展示（Phase 4，§3.6：可展开看 facts/today/week/longterm 快照） -->
+    <details id="memory-snapshot" class="memory-snapshot">
+      <summary>查看记忆快照 <span class="ms-sub">（只读 · 由运行时插件编译写入）</span></summary>
+      <div id="memory-snapshot-body" class="memory-snapshot-body">
+        <div class="ms-empty">加载中…</div>
+      </div>
+    </details>
+
+    <!-- 经验区 -->
+    <div class="section-head">
+      <h2>经验</h2>
+    </div>
+    <div class="switch-row">
+      <span class="switch-label">经验</span>
+      <button id="experience-switch" class="switch" role="switch" aria-checked="false"></button>
+      <span class="field-hint">默认关闭。开启后，助手会自动总结工作经验并不断成长，但有污染上下文的风险。</span>
+    </div>
+    <div id="experience-paused" class="experience-paused hidden">经验已暂停。已有内容会保留，但助手不能读取或记录经验。</div>
+    <div id="experience-categories" class="experience-categories"></div>
+  </section>
+</main>
+
+<!-- 新建助手对话框 -->
+<div id="create-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="create-title">
+  <div class="overlay-card">
+    <h2 id="create-title">新建助手</h2>
+    <input id="create-name" class="name-input" type="text" placeholder="名字提示" maxlength="24" autocomplete="off">
+    <div class="yuan-label">选择「元」</div>
+    <div id="yuan-chips" class="yuan-chips"></div>
+    <div id="import-slot" class="import-slot">角色卡导入（v1 暂未开放）</div>
+    <div class="overlay-actions">
+      <button id="create-cancel" class="btn btn-ghost">取消</button>
+      <button id="create-submit" class="btn btn-primary">创建</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<!-- 头像裁剪框（CropOverlay：选图后先裁再传，确认后才上传） -->
+<div id="crop-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="crop-title" tabindex="-1">
+  <div class="overlay-card crop-card">
+    <h2 id="crop-title">裁剪头像</h2>
+    <div id="crop-stage" class="crop-stage">
+      <img id="crop-img" alt="待裁剪图片" draggable="false">
+      <div class="crop-frame"></div>
+    </div>
+    <p class="crop-hint">拖动图片调整位置 · 滚轮或「＋ / −」缩放</p>
+    <div class="crop-toolbar">
+      <button id="crop-zoom-out" class="btn btn-ghost crop-zoom-btn" type="button" title="缩小">−</button>
+      <span id="crop-zoom-label" class="crop-zoom-label">100%</span>
+      <button id="crop-zoom-in" class="btn btn-ghost crop-zoom-btn" type="button" title="放大">＋</button>
+      <span id="crop-size-label" class="crop-size-label">—</span>
+    </div>
+    <div class="overlay-actions">
+      <button id="crop-cancel" class="btn btn-ghost" type="button">取消</button>
+      <button id="crop-submit" class="btn btn-primary" type="button">确认上传</button>
+    </div>
+  </div>
+</div>
+
+<!-- 删除助手确认框（Hana 3.3：必须输入助手名字才能删） -->
+<div id="delete-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+  <div class="overlay-card delete-card">
+    <h2 id="delete-title">删除助手</h2>
+    <p class="delete-warn">这会永久删除 Ta 的所有配置、记忆和对话记录，无法恢复。</p>
+    <label class="field-label" for="delete-name">输入助手名字「<span id="delete-confirm-name"></span>」确认删除</label>
+    <input id="delete-name" class="name-input" type="text" placeholder="输入助手名字" maxlength="24" autocomplete="off">
+    <div class="overlay-actions">
+      <button id="delete-cancel" class="btn btn-ghost">取消</button>
+      <button id="delete-submit" class="btn btn-danger" disabled>永久删除</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/assistant-manager/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+{
+  "name": "dsh-assistant-manager",
+  "version": "0.1.0",
+  "description": "助手管理（Hana 式）：卡片堆叠 + 新建助手 + 元选择，后台把配置落成 dsh 预设（.agent-presets/<id>/），即插即用；单包内置 soul 记忆/人格运行时（assistant-soul，按 dsh-assistant-manager/soul 子路径被预设引用）。",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib",
+    "client",
+    "assets",
+    "templates",
+    "web"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "node --check lib/index.js && node --check lib/soul/index.js && node --check client/client.js",
+    "test": "node --test",
+    "prepack": "npm run check && npm run test"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-home-paths": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-host-webserver": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-llm": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-system-prompt": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-tools": "^0.1.0-rc.6",
+    "@deepseek-ai/schemastery": "^3.18.1",
+    "js-yaml": "^4.3.1"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-sidebar"
+      ],
+      "platform": "web"
+    }
+  },
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./soul": "./lib/soul/index.js",
+    "./client": "./client/client.js",
+    "./package.json": "./package.json"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "typescript": "^5.9.3"
+  }
+}
