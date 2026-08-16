@@ -10,8 +10,11 @@
 <body>
 <main class="page">
   <header class="page-head">
-    <h1>助手配置</h1>
-    <p class="page-sub">卡片横向排布 · 点击切换 · 点击已选卡片换头像 · 删除/设主助手/排序</p>
+    <div class="page-head-text">
+      <h1>助手配置</h1>
+      <p class="page-sub">卡片横向排布 · 点击切换 · 点击已选卡片换头像 · 删除/设主助手/排序</p>
+    </div>
+    <button id="import-hana-btn" class="btn btn-ghost page-import-btn" type="button">⇄ 从 Hana 转移</button>
   </header>
 
   <!-- 卡片堆叠区 -->
@@ -131,7 +134,10 @@
     <input id="create-name" class="name-input" type="text" placeholder="名字提示" maxlength="24" autocomplete="off">
     <div class="yuan-label">选择「元」</div>
     <div id="yuan-chips" class="yuan-chips"></div>
-    <div id="import-slot" class="import-slot">角色卡导入（v1 暂未开放）</div>
+    <div id="import-slot" class="import-slot">
+      <button id="import-hana-btn-modal" class="btn btn-ghost import-hana-btn" type="button">⇄ 从 Hana 转移助手</button>
+      <span class="import-slot-tip">把本机 Hana 助手的意识 / 记忆 / 经验搬进 dsh</span>
+    </div>
     <div class="overlay-actions">
       <button id="create-cancel" class="btn btn-ghost">取消</button>
       <button id="create-submit" class="btn btn-primary">创建</button>
@@ -140,6 +146,19 @@
 </div>
 
 <div id="toast" class="toast hidden"></div>
+
+<!-- 从 Hana 转移对话框（本地定制 v0.9.0）：扫描本机 Hana 助手，逐个勾选 + 记忆/经验可选项 -->
+<div id="import-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="import-title">
+  <div class="overlay-card import-card">
+    <h2 id="import-title">从 Hana 转移助手</h2>
+    <p class="import-sub" id="import-sub">扫描本机 Hana 助手，勾选要搬进 dsh 的；转移后新会话生效。</p>
+    <div id="import-body" class="import-body"></div>
+    <div class="overlay-actions">
+      <button id="import-cancel" class="btn btn-ghost">取消</button>
+      <button id="import-submit" class="btn btn-primary" disabled>开始转移</button>
+    </div>
+  </div>
+</div>
 
 <!-- 头像裁剪框（CropOverlay：选图后先裁再传，确认后才上传） -->
 <div id="crop-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="crop-title" tabindex="-1">

@@ -1,6 +1,6 @@
 {
   "name": "dsh-assistant-manager",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "助手管理（Hana 式）：卡片堆叠 + 新建助手 + 元选择，后台把配置落成 dsh 预设（.agent-presets/<id>/），即插即用；单包内置 soul 记忆/人格运行时（assistant-soul，按 dsh-assistant-manager/soul 子路径被预设引用）。",
   "type": "module",
   "main": "lib/index.js",

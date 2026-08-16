@@ -31,7 +31,13 @@ html, body {
   padding: 28px 20px 60px;
 }
 
-.page-head h1 {
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.page-head-text h1 {
   margin: 0 0 4px;
   font-size: 22px;
   font-weight: 600;
@@ -41,6 +47,15 @@ html, body {
   font-size: 13px;
   color: var(--text-muted);
 }
+.page-import-btn {
+  flex: none;
+  margin-top: 2px;
+  border-color: var(--accent);
+  color: var(--accent);
+  font-size: 12.5px;
+  padding: 6px 14px;
+}
+.page-import-btn:hover { background: var(--accent); color: #fff; }
 
 /* ---------- 卡片堆叠 ---------- */
 .stack-zone {
@@ -786,3 +801,40 @@ html, body {
   font-size: 12px;
   color: var(--text-muted);
 }
+
+/* ---------- 从 Hana 转移（本地定制 v0.9.0） ---------- */
+.import-hana-btn { border-color: var(--accent); color: var(--accent); font-size: 13px; }
+.import-hana-btn:hover { background: var(--accent); color: #fff; }
+.import-slot-tip { display: block; margin-top: 6px; font-size: 11px; color: var(--text-muted); }
+.import-card { width: 620px; max-width: 100%; max-height: calc(100vh - 60px); display: flex; flex-direction: column; }
+.import-card h2 { margin-bottom: 6px; }
+.import-sub { margin: 0 0 12px; font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+.import-body { overflow-y: auto; min-height: 0; }
+.import-list { display: flex; flex-direction: column; gap: 6px; }
+.import-row {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+  border: 1px solid var(--border); border-radius: 12px; cursor: pointer;
+}
+.import-row:hover { background: var(--accent-light); }
+.import-row input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; flex: none; }
+.import-avatar {
+  width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex: none;
+  background: var(--bg); display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: var(--text-muted); overflow: hidden;
+}
+.import-info { flex: 1; min-width: 0; }
+.import-info .n { font-size: 13px; font-weight: 600; color: var(--text); }
+.import-info .d { font-size: 11px; color: var(--text-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.import-badge { font-size: 11px; padding: 3px 8px; border-radius: 8px; flex: none; white-space: nowrap; }
+.import-badge.upd { background: var(--accent-light); color: var(--accent); }
+.import-badge.new { background: rgba(74, 107, 74, 0.12); color: #4a6b4a; }
+.import-opts { margin-top: 12px; padding: 12px 14px; background: var(--bg); border-radius: 12px; display: flex; flex-direction: column; gap: 8px; }
+.import-opts label { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text); cursor: pointer; }
+.import-opts input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; }
+.import-opts input[type="checkbox"]:disabled { opacity: 0.55; cursor: default; }
+.import-opts .opt-tip { font-size: 11px; color: var(--text-muted); margin-left: 22px; margin-top: -4px; }
+.import-err { margin-top: 10px; padding: 10px 12px; background: rgba(139, 44, 31, 0.08); border: 1px solid rgba(139, 44, 31, 0.25); border-radius: 10px; font-size: 12px; color: var(--danger); }
+.import-result { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.import-result .rr { font-size: 12.5px; color: var(--text); padding: 7px 10px; background: var(--bg); border-radius: 10px; line-height: 1.6; }
+.import-result .rr.err { background: rgba(139, 44, 31, 0.07); color: var(--danger); }
+.import-empty { padding: 20px; text-align: center; font-size: 12.5px; color: var(--text-muted); }

@@ -971,6 +971,143 @@ $("#create-overlay").addEventListener("click", (e) => {
   if (e.target === $("#create-overlay")) closeCreate();
 });
 
+/* ---------------- 从 Hana 转移（本地定制 v0.9.0） ---------------- */
+const IMPORT_API = "/assistant-manager/api/import";
+let importSources = [];
+let importing = false;
+let importFinished = false;
+
+function openImportOverlay() {
+  closeCreate(); // 从「新建助手」弹窗进来：先关掉它再开转移弹窗
+  importFinished = false;
+  const overlay = $("#import-overlay");
+  overlay.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+  const btn = $("#import-submit");
+  btn.disabled = true;
+  btn.textContent = "开始转移";
+  $("#import-sub").textContent = "扫描本机 Hana 助手，勾选要搬进 dsh 的；转移后新会话生效。";
+  $("#import-body").innerHTML = '<div class="import-empty">正在扫描本机 Hana 助手…</div>';
+  fetch(`${IMPORT_API}/preview`)
+    .then((r) => r.json())
+    .then((d) => {
+      importSources = d.sources || [];
+      if (importSources.length === 0) {
+        $("#import-body").innerHTML = '<div class="import-empty">没有发现可转移的 Hana 助手（本机 ~/.hanako/agents 下需有 AGENTS.md）。</div>';
+        return;
+      }
+      renderImportList();
+    })
+    .catch((err) => {
+      $("#import-body").innerHTML = '<div class="import-err">扫描失败：' + (err && err.message || err) + "</div>";
+    });
+}
+
+function closeImportOverlay() {
+  $("#import-overlay").classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function renderImportList() {
+  const rows = importSources.map((s) => {
+    const av = s.hasAvatar
+      ? '<img class="import-avatar" src="' + IMPORT_API + '/avatar?source=' + encodeURIComponent(s.id) + '" alt="">'
+      : '<span class="import-avatar">' + escHtml(s.name.slice(0, 1)) + "</span>";
+    const badge = s.target.mode === "update"
+      ? '<span class="import-badge upd">更新 dsh「' + escHtml(s.target.name || s.target.id) + "」</span>"
+      : '<span class="import-badge new">将新建</span>';
+    return '<label class="import-row">'
+      + '<input type="checkbox" class="src-check" value="' + escHtml(s.id) + '" checked>'
+      + av
+      + '<span class="import-info"><span class="n">' + escHtml(s.name) + "</span>"
+      + '<span class="d">' + escHtml(s.id) + " · 记忆 " + s.memory.files.length + " 文件" + (s.memory.pins ? " + " + s.memory.pins + " 条置顶" : "") + " · 经验 " + s.expFiles + " 类" + (s.expEntries ? " " + s.expEntries + " 条" : "") + "</span></span>"
+      + badge + "</label>";
+  }).join("");
+  $("#import-body").innerHTML = '<div class="import-list">' + rows + "</div>"
+    + '<div class="import-opts">'
+    + '<label><input type="checkbox" id="opt-memory" checked> 转移记忆<span class="opt-tip">facts / today / week / longterm + 置顶记忆，覆盖目标同名记忆</span></label>'
+    + '<label><input type="checkbox" id="opt-exp" checked> 转移经验<span class="opt-tip">全部经验分类（' + importSources.reduce((n, s) => n + s.expFiles, 0) + " 个分类文件），覆盖目标同名分类</span></label>"
+    + '<label style="color:var(--text-muted)"><input type="checkbox" id="opt-soul" checked disabled> 意识（必选）<span class="opt-tip">人格身份全文 + 头像，每次转移都会写入</span></label>'
+    + "</div>";
+  const submit = $("#import-submit");
+  submit.disabled = false;
+  const cbs = document.querySelectorAll("#import-body .src-check");
+  const sync = () => { submit.disabled = !Array.from(cbs).some((c) => c.checked); };
+  cbs.forEach((c) => c.addEventListener("change", sync));
+}
+
+async function runImport() {
+  if (importing) return;
+  // 完成态：主按钮变成「关闭」，点击关闭并刷新助手列表
+  if (importFinished) {
+    closeImportOverlay();
+    await refresh();
+    return;
+  }
+  const sel = Array.from(document.querySelectorAll("#import-body .src-check"))
+    .filter((c) => c.checked)
+    .map((c) => c.value);
+  if (sel.length === 0) {
+    toast("请先勾选要转移的助手");
+    return;
+  }
+  importing = true;
+  const btn = $("#import-submit");
+  btn.disabled = true;
+  btn.textContent = "转移中…";
+  $("#import-sub").textContent = "正在把勾选的助手搬进 dsh，稍等…";
+  let ok = false;
+  try {
+    const res = await fetch(IMPORT_API, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        sources: sel,
+        includeMemory: $("#opt-memory").checked,
+        includeExperience: $("#opt-exp").checked,
+      }),
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.error || "转移失败");
+    ok = true;
+    importFinished = true;
+    $("#import-sub").textContent = "转移完成，dsh 新会话即使用新的助手配置。";
+    const list = (d.results || []).map((r) => {
+      if (r.error) return '<div class="rr err">✕ ' + escHtml(r.name + "（" + r.source + "）") + "：" + escHtml(r.error) + "</div>";
+      const bits = [];
+      bits.push("意识 " + (r.identityBytes > 1024 ? (r.identityBytes / 1024).toFixed(1) + "KB" : r.identityBytes + "B"));
+      if (r.avatar) bits.push("头像✓");
+      if (r.memory) bits.push("记忆 " + r.memory.files.length + " 文件 + " + r.memory.pins + " 条置顶");
+      if (r.experience) bits.push("经验 " + r.experience.files + " 类 " + r.experience.entries + " 条");
+      return '<div class="rr">✓ ' + escHtml(r.name + "（" + r.source + "）") + " → " + escHtml(r.target.id) + (r.target.mode === "update" ? "（更新）" : "（新建）") + " · " + escHtml(bits.join(" · ")) + "</div>";
+    }).join("");
+    $("#import-body").innerHTML = '<div class="import-result">' + list + "</div>";
+  } catch (e) {
+    $("#import-body").insertAdjacentHTML("beforeend", '<div class="import-err">转移失败：' + (e && e.message || e) + "</div>");
+  } finally {
+    importing = false;
+    if (ok) {
+      btn.disabled = false;
+      btn.textContent = "关闭";
+    } else {
+      btn.disabled = false;
+      btn.textContent = "开始转移";
+    }
+  }
+}
+
+$("#import-hana-btn").addEventListener("click", openImportOverlay);
+$("#import-hana-btn-modal").addEventListener("click", openImportOverlay);
+$("#import-cancel").addEventListener("click", closeImportOverlay);
+$("#import-submit").addEventListener("click", runImport);
+$("#import-overlay").addEventListener("click", (e) => {
+  if (e.target === $("#import-overlay")) closeImportOverlay();
+});
+
 // 移除头像（Phase 3）
 $("#remove-avatar-btn").addEventListener("click", removeAvatar);
 
