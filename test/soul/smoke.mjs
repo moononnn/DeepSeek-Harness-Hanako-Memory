@@ -92,17 +92,19 @@ const check = (name, cond, extra = "") => {
   if (!cond) failed += 1;
 };
 
-/* 1. section 注册 */
-const names = sections.map((s) => s.name);
-check("4 个 section", names.length === 4, names.join(","));
-check("order 0 identity", sections[0].order === 0 && sections[0].name === "assistant:identity");
-check("order 1 consciousness", sections[1].order === 1 && sections[1].name === "assistant:consciousness");
-check("order 2 memory", sections[2].order === 2 && sections[2].name === "assistant:memory");
-check("order 3 experience", sections[3].order === 3 && sections[3].name === "assistant:experience");
+/* 1. section 注册（按 order 排序，模拟 assemble 的排序行为；text 函数求值同 assemble） */
+const sortedSections = [...sections].sort((a, b) => a.order - b.order);
+const names = sortedSections.map((s) => s.name);
+check("5 个 section", names.length === 5, names.join(","));
+check("order -50 user", sortedSections[0].order === -50 && sortedSections[0].name === "assistant:user");
+check("order 0 identity", sortedSections[1].order === 0 && sortedSections[1].name === "assistant:identity");
+check("order 1 consciousness", sortedSections[2].order === 1 && sortedSections[2].name === "assistant:consciousness");
+check("order 2 memory", sortedSections[3].order === 2 && sortedSections[3].name === "assistant:memory");
+check("order 3 experience", sortedSections[4].order === 3 && sortedSections[4].name === "assistant:experience");
 
-/* 2. 变量求值 + 渲染（空记忆 → 段消失） */
+/* 2. 变量求值 + 渲染（空记忆 → 段消失；text 为函数时先求值，同 assemble） */
 const assembly = {
-  sections: sections.map((s) => ({ name: s.name, order: s.order, text: s.text })),
+  sections: sortedSections.map((s) => ({ name: s.name, order: s.order, text: typeof s.text === "function" ? s.text() : s.text })),
   tools: [],
   variables: Object.fromEntries([...variables].map(([k, fn]) => [k, fn()])),
 };
@@ -110,6 +112,7 @@ const rendered = renderPrompt(assembly);
 check("渲染含「你是 小花。」", rendered.includes("你是 小花。"));
 check("渲染含身份/人格", rendered.includes("小花的身份描述") && rendered.includes("小花的性格设定"));
 check("渲染含 MOOD 意识块", rendered.includes("## MOOD") && rendered.includes("<mood>"));
+check("无 user.yaml 时无「# 关于用户」段", !rendered.includes("# 关于用户"));
 check("空记忆时无「置顶记忆」段", !rendered.includes("## 置顶记忆"));
 check("空记忆时无「记忆快照」段", !rendered.includes("## 记忆快照"));
 check("空经验时无经验索引内容", !rendered.includes("## 经验库\n做具体任务前先查经验库（recall_experience）。\n\n# "));
@@ -123,7 +126,7 @@ check("pin_memory 执行成功", pinResult.pinned === true, pinResult.message);
 
 // 重新渲染：置顶记忆应出现
 const assembly2 = {
-  sections: sections.map((s) => ({ name: s.name, order: s.order, text: s.text })),
+  sections: sortedSections.map((s) => ({ name: s.name, order: s.order, text: typeof s.text === "function" ? s.text() : s.text })),
   tools: [],
   variables: Object.fromEntries([...variables].map(([k, fn]) => [k, fn()])),
 };

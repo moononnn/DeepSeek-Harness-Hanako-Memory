@@ -185,6 +185,10 @@ try {
   res = await fetch(`${base}/`);
   const html = await res.text();
   check("首页 200 且含标题", res.status === 200 && html.includes("助手配置") && html.includes("新建助手"));
+  // Phase 5：「我」tab + 用户档案表单（默认「助手们」视图保持现状）
+  check("首页含「我」tab 导航", html.includes('data-tab="me"') && html.includes("助手们"));
+  check("首页含用户档案表单", html.includes("用户档案") && html.includes("Ta 怎么称呼你"));
+  check("首页含用户配置生效提示条", html.includes("用户配置修改后，新建会话生效") && html.includes("当前会话不受影响"));
 
   // Phase 4：常驻提示条（配置修改新会话生效）+ 记忆快照展开区（只读）
   check("首页含「新建会话后生效」提示条", html.includes("会在新会话生效") && html.includes("当前会话不受影响"));
@@ -228,6 +232,77 @@ try {
   data = await res.json();
   check("头像移除 200 + hasAvatar false", res.status === 200 && data.agent.hasAvatar === false, JSON.stringify(data));
   check("头像文件已删", !existsSync(join(presetDir, "assets", "avatar.png")));
+
+  /* 10.5 「我」页面 API（Phase 5）：user.yaml 读写 + 用户头像三段（404 / 魔数 / 部分更新） */
+  res = await fetch(`${base}/api/user`);
+  data = await res.json();
+  check("user 初始为空（无 user.yaml 老预设不炸）", res.status === 200 && data.name === "" && data.profile === "");
+
+  res = await fetch(`${base}/api/user`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ name: "小花", profile: "喜欢四川话\n会写代码" }),
+  });
+  data = await res.json();
+  check("user PUT 200 + 回显", res.status === 200 && data.name === "小花" && data.profile === "喜欢四川话\n会写代码", JSON.stringify(data));
+  check("user.yaml 落盘", existsSync(join(dshHome, "assistant-soul", "user.yaml")));
+
+  res = await fetch(`${base}/api/user`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ profile: "新档案" }),
+  });
+  data = await res.json();
+  check("user 部分更新只动 profile", res.status === 200 && data.name === "小花" && data.profile === "新档案", JSON.stringify(data));
+
+  res = await fetch(`${base}/api/user`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({}),
+  });
+  check("user 空 patch 400", res.status === 400);
+
+  res = await fetch(`${base}/api/user`);
+  data = await res.json();
+  check("user GET 读回", res.status === 200 && data.name === "小花" && data.profile === "新档案");
+
+  res = await fetch(`${base}/api/user/avatar`);
+  check("user 头像初始 404（前端兜底 SVG 占位）", res.status === 404);
+
+  const pngB64 = Buffer.from(PNG).toString("base64");
+  res = await fetch(`${base}/api/user/avatar`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ data: pngB64 }),
+  });
+  data = await res.json();
+  check("user 头像上传 200", res.status === 200 && data.size > 0, JSON.stringify(data));
+  check("user-avatar.png 落盘", existsSync(join(dshHome, "assistant-soul", "user-avatar.png")));
+
+  res = await fetch(`${base}/api/user/avatar`);
+  check("user 头像 GET 200 image/png", res.status === 200 && (res.headers.get("content-type") || "").includes("image/png"));
+
+  res = await fetch(`${base}/api/user/avatar`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ data: Buffer.from("not-a-png").toString("base64") }),
+  });
+  check("user 头像非法魔数 400", res.status === 400);
+
+  res = await fetch(`${base}/api/user/avatar`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({}),
+  });
+  check("user 头像缺 data 400", res.status === 400);
+
+  res = await fetch(`${base}/api/user/avatar`, { method: "DELETE" });
+  data = await res.json();
+  check("user 头像移除 200 + removed", res.status === 200 && data.removed === true, JSON.stringify(data));
+  check("user-avatar.png 已删", !existsSync(join(dshHome, "assistant-soul", "user-avatar.png")));
+
+  res = await fetch(`${base}/api/user/avatar`);
+  check("user 头像移除后 404", res.status === 404);
 
   /* 11. 排序（Phase 3） */
   res = await fetch(`${base}/api/agents`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: "第二助手", yuan: "butter" }) });

@@ -9,6 +9,11 @@
  * - DELETE /assistant-manager/api/agents/{id}/pins/{key} → 删除置顶记忆（id 或关键词）
  * - GET  /assistant-manager/api/agents/{id}/experience → 经验分类列表（只读）
  * - GET  /assistant-manager/api/model-default      → 全局默认模型 {provider, model, reasoningEffort?}
+ * - GET  /assistant-manager/api/user                → 全局用户 {name, profile}（「我」页面）
+ * - PUT  /assistant-manager/api/user                → 部分更新 {name?, profile?}，落 user.yaml
+ * - GET  /assistant-manager/api/user/avatar         → 用户头像（无自定义 404，前端兜底 SVG 占位）
+ * - POST /assistant-manager/api/user/avatar         → 上传 {data: base64PNG}（魔数校验），落 user-avatar.png
+ * - DELETE /assistant-manager/api/user/avatar       → 移除用户头像
  * - GET  /assistant-manager/                       → 前端单页（web/index.html）
  * - GET  /assistant-manager/app.css|app.js         → 前端静态
  * - GET  /assistant-manager/assets/*               → 插件包素材（默认头像等）
@@ -55,6 +60,7 @@ import { setDefaultAgent } from "./defaults.js";
 import { addPinnedEntry, readPinnedEntries, removePinnedEntry } from "./pins.js";
 import { listExperienceCategories } from "./experience.js";
 import { readMemorySnapshot } from "./memory.js";
+import { readUserYaml, writeUserYaml, userAvatarPath, writeUserAvatar, removeUserAvatar } from "./user.js";
 import { YUAN_KEYS } from "./templates.js";
 
 export const ROUTE_PREFIX = "/assistant-manager";
@@ -392,6 +398,76 @@ export function registerRoutes(ctx: Context, config: { dshHome?: string }): void
             return;
           }
           sendJson(res, 200, selection);
+          return;
+        }
+
+        // 「我」页面（Phase 5）：全局用户数据，落 <dshHome>/assistant-soul/user.yaml + user-avatar.png。
+        // 分享版红线：只读写用户自己的文件，绝不触碰任何助手的身份/预设文件。
+        // GET /api/user：读 user.yaml（缺失回落 { name: "", profile: "" }，老预设不炸）
+        if (clean === "/api/user" && req.method === "GET") {
+          sendJson(res, 200, readUserYaml(paths));
+          return;
+        }
+        // PUT /api/user：部分更新 { name?, profile? }（至少一个字段；name 空串 = 恢复默认称呼，
+        // profile 空串 = 清空档案，都是合法写入）
+        if (clean === "/api/user" && req.method === "PUT") {
+          const payload = await readJsonBody(req);
+          if (!payload) {
+            sendJson(res, 400, { error: "请求体不是合法 JSON" });
+            return;
+          }
+          const patch: { name?: string; profile?: string } = {};
+          if (typeof payload.name === "string") patch.name = payload.name;
+          if (typeof payload.profile === "string") patch.profile = payload.profile;
+          if (patch.name === undefined && patch.profile === undefined) {
+            sendJson(res, 400, { error: "没有可更新的字段（name / profile 至少提供一个）" });
+            return;
+          }
+          sendJson(res, 200, writeUserYaml(paths, patch));
+          return;
+        }
+        // 用户头像三段（参考 agent avatar：无自定义 404，前端兜底 SVG 占位）：
+        // GET 读取、POST 上传（{ data: base64PNG }，content-type 判扩展名 + 魔数校验）、DELETE 移除
+        if (req.method === "GET" && clean === "/api/user/avatar") {
+          const file = userAvatarPath(paths);
+          if (!file) {
+            sendJson(res, 404, { error: "还没有用户头像" });
+            return;
+          }
+          serveFile(res, file, file);
+          return;
+        }
+        if (req.method === "POST" && clean === "/api/user/avatar") {
+          // content-type 判扩展名：裁剪器固定输出 PNG（POST 走 JSON body），
+          // 明确声明 jpeg/webp 的直接拒绝；其余按 PNG 校验（魔数兜底）
+          const ct = String(req.headers["content-type"] ?? "").toLowerCase();
+          if (ct.includes("image/jpeg") || ct.includes("image/webp")) {
+            sendJson(res, 400, { error: "用户头像只支持 PNG 图片" });
+            return;
+          }
+          const payload = await readJsonBody(req);
+          const data = payload?.data;
+          if (typeof data !== "string" || !data) {
+            sendJson(res, 400, { error: "需要 { data: base64PNG } 请求体" });
+            return;
+          }
+          let buf: Buffer;
+          try {
+            buf = Buffer.from(data, "base64");
+          } catch {
+            sendJson(res, 400, { error: "data 不是合法的 base64" });
+            return;
+          }
+          try {
+            const result = writeUserAvatar(paths, buf);
+            sendJson(res, 200, { size: result.size });
+          } catch (e) {
+            sendJson(res, 400, { error: e instanceof Error ? e.message : String(e) });
+          }
+          return;
+        }
+        if (req.method === "DELETE" && clean === "/api/user/avatar") {
+          sendJson(res, 200, removeUserAvatar(paths));
           return;
         }
 

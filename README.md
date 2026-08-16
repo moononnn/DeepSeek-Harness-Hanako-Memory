@@ -7,9 +7,9 @@
 ## ⚠️ 先看这里
 
 - 本插件是 **dsh 生态**插件，需要 DeepSeek Harness（dsh）环境。管理界面与人格/记忆运行时已合成一个包（soul 为内置子模块），装一次全都有。
-- 会读写你 dsh home 下的 `.agent-presets/` 与 `assistant-soul/` 目录：新建、编辑、删除助手预设。
+- 会读写你 dsh home 下的 `.agent-presets/` 与 `assistant-soul/` 目录：新建、编辑、删除助手预设；`assistant-soul/user.yaml` 与 `user-avatar.png` 是你的全局用户信息（「我」页面）。
 - **删除助手会永久删除它的配置、记忆和对话记录**（删除前必须输入助手名字确认，默认助手和最后一个助手会被保护）。
-- 配置修改（名字/身份/人格/元/开关）**只影响此后新建的会话**，当前会话不受影响，这是 dsh 的机制。
+- 配置修改（名字/身份/人格/元/开关/**用户配置**）**只影响此后新建的会话**，当前会话不受影响，这是 dsh 的机制。
 
 ## 这是干什么的？
 
@@ -41,6 +41,7 @@
 - 👑 **设为主助手**：写 dsh 原生 settings，新会话默认用它
 - 🔼🔽 **排序**：上移/下移，顺序落盘持久
 - 📖 **记忆快照只读查看**：today/week/longterm/facts + 滚动摘要列表 + facts 统计
+- 🙋 **「我」页面（Hana 同款）**：全局用户名字 + 用户档案 + 用户头像（裁剪上传，SVG 占位）。名字与档案注入系统提示词（用户档案排在助手身份/意识**之前**），所有助手共享一份，一次修改全局生效
 
 ## 安装
 
@@ -76,6 +77,7 @@ $ dsh plugin --profile web add link:/绝对路径/dsh-assistant-manager
 ## 隐私
 
 - 所有数据都存在**本地** dsh home（`.agent-presets/` + `assistant-soul/`），不联网、无遥测、不上传任何东西。
+- 「我」页面的用户信息（名字/档案/头像）只写 `assistant-soul/user.yaml` 与 `assistant-soul/user-avatar.png`，不触碰任何助手的身份/预设文件。
 - 记忆编译调用的是你自己配置的模型（默认独立配置在预设的 `memory.model`，不吃主对话模型）。
 
 ## 兼容性

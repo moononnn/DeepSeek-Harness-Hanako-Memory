@@ -26,3 +26,14 @@ export interface ProfilePaths {
  * @param profile - profile 目录名，唯一标识一个助手。
  */
 export declare function resolveProfileDir(dshHome: string | undefined, profile: string): ProfilePaths;
+export interface UserPaths {
+    /** <dshHome>/assistant-soul/user.yaml（name + profile） */
+    yaml: string;
+    /** <dshHome>/assistant-soul/user-avatar.png */
+    avatar: string;
+}
+/**
+ * 解析全局用户文件路径。home 解析逻辑与 resolveProfileDir 完全一致：
+ * 显式配置 > $DSH_HOME 环境变量 > ~/.dsh；多 dshHome 场景下 user.yaml 跟着 home 走。
+ */
+export declare function resolveUserPaths(dshHome: string | undefined): UserPaths;

@@ -17,10 +17,11 @@ import z from "@deepseek-ai/schemastery";
 import type { Context } from "@deepseek-ai/cordis";
 import { YUAN_TEMPLATES, YUAN_KEYS } from "./yuan.js";
 import type { YuanKey } from "./yuan.js";
-import { resolveProfileDir } from "./paths.js";
+import { resolveProfileDir, resolveUserPaths } from "./paths.js";
 import { buildIdentitySectionText, buildMemorySectionText, buildExperienceSectionText } from "./prompt.js";
 import { formatPinned, formatMemorySnapshot, registerMemoryTicker } from "./memory.js";
 import { readExperienceIndex } from "./experience.js";
+import { readUserYaml, readUserProfile, resolveUserName } from "./user.js";
 import { registerTools } from "./tools.js";
 
 /** dsh-agent-default-model 服务最小形状（base 组合已挂载，与 manager http.ts 同款姿势）。 */
@@ -112,10 +113,26 @@ function resolveMemoryModel(config: SoulConfig, ctx: Context): { provider: strin
 
 export function apply(ctx: Context, config: SoulConfig): void {
   const paths = resolveProfileDir(config.dshHome, config.profile);
+  const userPaths = resolveUserPaths(config.dshHome);
   const yuanText = YUAN_TEMPLATES[config.yuan] ?? "";
   const memoryModel = resolveMemoryModel(config, ctx);
+  // userName 全局优先：user.yaml 的 name > 预设 config.userName（老预设兜底）> 「用户」
+  const userName = resolveUserName(readUserYaml(userPaths).name, config.userName);
 
   /* ① 系统提示词 section（静态结构 + {{变量}} 占位） */
+  // 用户档案 section（「我」页面）：order -50，卡在 harness:identity(-100) 之后、
+  // 助手身份 identity(0)/意识 consciousness(1) 之前，与 Hana「user.md → identity → ishiki」顺序语义一致。
+  // text 是 provider：档案为空返回空串 → 渲染时空段整体消失（不留「# 关于用户」空标题）；
+  // section 始终注册、不依赖文件存在（dsh 渲染时逐段求值）。
+  ctx.systemPrompt.section({
+    name: "assistant:user",
+    order: -50,
+    text: () => {
+      const profile = readUserProfile(userPaths);
+      return profile ? `# 关于用户\n${profile}` : "";
+    },
+  });
+
   ctx.systemPrompt.section({
     name: "assistant:identity",
     order: 0,
@@ -149,8 +166,9 @@ export function apply(ctx: Context, config: SoulConfig): void {
   /* ② 动态变量（每次装配求值；返回空串则对应段自动消失）
      dsh 变量名规范：/^[a-z][a-z0-9_]*$/，必须全小写下划线 */
   ctx.systemPrompt.variable("assistant_name", () => config.name);
+  ctx.systemPrompt.variable("user_profile", () => readUserProfile(userPaths));
   if (yuanText) {
-    ctx.systemPrompt.variable("user_name", () => config.userName);
+    ctx.systemPrompt.variable("user_name", () => userName);
   }
   if (config.memory.enabled) {
     ctx.systemPrompt.variable("pinned_memory", () => formatPinned(paths));

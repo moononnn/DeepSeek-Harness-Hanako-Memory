@@ -11,6 +11,7 @@ import {
 } from "./crop.js";
 
 const API = "/assistant-manager/api/agents";
+const USER_API = "/assistant-manager/api/user";
 const ASSET = "/assistant-manager/assets";
 
 // 四元展示信息（§3.5 yuan.types + 思考块标签；顺序 butter → hanako → ming，kong 单独横幅）
@@ -62,7 +63,7 @@ function avatarUrl(agent) {
   return `${ASSET}/avatars/${(agent && agent.yuan) || "hanako"}.png`;
 }
 
-// 隐藏文件选择（点击已选中卡片 / 详情头像触发，accept png/jpeg/webp，§3.2）
+// 隐藏文件选择（点击已选中卡片 / 详情头像 / 「我」页头像触发，accept png/jpeg/webp，§3.2）
 const avatarInput = document.createElement("input");
 avatarInput.type = "file";
 avatarInput.accept = "image/png,image/jpeg,image/webp";
@@ -70,9 +71,19 @@ avatarInput.hidden = true;
 avatarInput.addEventListener("change", onAvatarFileChosen);
 document.body.appendChild(avatarInput);
 
+// 裁剪上传目标：裁剪组件（crop.js）是纯几何计算、无角色概念（Phase 5 结论），
+// 角色（助手/用户）在打开裁剪框时记录，确认上传时按角色分发到不同接口。
+let avatarTarget = "agent"; // "agent"（助手头像）| "user"（用户头像）
+
 function openAvatarPicker() {
   const agent = currentAgent();
   if (!agent) return;
+  avatarTarget = "agent";
+  avatarInput.click();
+}
+
+function openUserAvatarPicker() {
+  avatarTarget = "user";
   avatarInput.click();
 }
 
@@ -81,8 +92,7 @@ function onAvatarFileChosen() {
   const file = avatarInput.files && avatarInput.files[0];
   avatarInput.value = "";
   if (!file) return;
-  const agent = currentAgent();
-  if (!agent) return;
+  if (avatarTarget === "agent" && !currentAgent()) return;
   // file.type 个别环境可能为空，按扩展名兜底推断（与后端支持的三类格式一致）
   const ext = (file.name.split(".").pop() || "").toLowerCase();
   const ct = file.type && file.type.startsWith("image/")
@@ -98,7 +108,7 @@ function onAvatarFileChosen() {
     toast("请选择 png / jpeg / webp 图片");
     return;
   }
-  openCropOverlay(file);
+  openCropOverlay(file, avatarTarget);
 }
 
 // 上传头像：body 直接传文件二进制（裁剪器输出 PNG，content-type 固定 image/png，后端校验魔数）
@@ -128,6 +138,7 @@ const CROP = {
   boxSize: 280, // 裁剪框边长（CSS 像素，与 .crop-stage 尺寸一致）
   img: null, // 解码后的 <img>（naturalWidth/Height 为原图像素）
   url: "", // object URL（关闭 overlay 时 revoke）
+  role: "agent", // 确认上传的目标：agent（助手头像）| user（用户头像）
   offsetX: 0,
   offsetY: 0,
   scale: 1,
@@ -137,13 +148,14 @@ const CROP = {
 };
 
 // 选图后解码并打开裁剪框；图片加载失败给提示（不打开）
-function openCropOverlay(file) {
+function openCropOverlay(file, role) {
   const url = URL.createObjectURL(file);
   const probe = new Image();
   probe.onload = () => {
     const min = minScaleFor(probe.naturalWidth, probe.naturalHeight, CROP.boxSize);
     CROP.img = probe;
     CROP.url = url;
+    CROP.role = role || "agent";
     CROP.scale = min;
     // 初始居中：图片中心对齐裁剪框中心（最小缩放下必在钳制范围内）
     const off = centerOffset(probe, min);
@@ -218,7 +230,7 @@ function applyZoom(factor) {
   renderCrop();
 }
 
-// 确认上传：canvas 按裁剪区域裁出正方形 → toBlob PNG → 走现有 PUT avatar 接口
+// 确认上传：canvas 按裁剪区域裁出正方形 → toBlob PNG → 按角色分发（助手 PUT avatar / 用户 POST avatar）
 function confirmCropUpload() {
   const btn = $("#crop-submit");
   if (btn.disabled) return;
@@ -235,14 +247,51 @@ function confirmCropUpload() {
   ctx.imageSmoothingQuality = "high";
   ctx.drawImage(img, rect.x, rect.y, rect.size, rect.size, 0, 0, out, out);
   canvas.toBlob(async (blob) => {
-    const agent = currentAgent();
+    const role = CROP.role;
     closeCropOverlay();
-    if (!blob || !agent) {
-      toast(blob ? "助手不存在，请重试" : "图片处理失败，请重试");
+    if (!blob) {
+      toast("图片处理失败，请重试");
+      return;
+    }
+    if (role === "user") {
+      await putUserAvatarBlob(blob);
+      return;
+    }
+    const agent = currentAgent();
+    if (!agent) {
+      toast("助手不存在，请重试");
       return;
     }
     await putAvatarBlob(agent, blob);
   }, "image/png");
+}
+
+// 上传用户头像：blob → base64 PNG → POST /api/user/avatar { data }（魔数校验在后端）
+async function putUserAvatarBlob(blob) {
+  try {
+    const dataUrl = await blobToDataUrl(blob);
+    const base64 = dataUrl.split(",")[1];
+    const res = await fetch(`${USER_API}/avatar`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ data: base64 }),
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || "上传失败");
+    await refreshUserAvatar();
+    toast("头像已更新");
+  } catch (e) {
+    toast(e.message || "上传失败");
+  }
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("图片处理失败"));
+    reader.readAsDataURL(blob);
+  });
 }
 
 // 移除头像：恢复 yuan 默认头像兜底（Hana「移除头像」按钮）
@@ -264,6 +313,110 @@ async function removeAvatar() {
 
 function currentAgent() {
   return state.agents.find((a) => a.id === state.selectedId) || null;
+}
+
+/* ================================================================ */
+/* Phase 5：「我」tab（Hana 同款：头像 → 名字 → 用户档案 → 保存）          */
+/* ================================================================ */
+
+// 无头像时的 SVG 人形占位（Hana avatar-upload 的占位图标语义，描边风格）
+const USER_PLACEHOLDER = "data:image/svg+xml;utf8," + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="#6b6158" stroke-width="4" stroke-linecap="round"><circle cx="32" cy="25" r="10"/><path d="M14 53c3.5-10 10-15 18-15s14.5 5 18 15"/></svg>',
+);
+
+// 「我」页当前已保存的用户数据（loadUser 回填；保存时与输入比较，变了才提交）
+let userState = { name: "", profile: "" };
+
+// 读全局用户（user.yaml）；缺失回落空（老预设不炸）。每次进入「我」tab 都刷新。
+async function loadUser() {
+  try {
+    const res = await fetch(USER_API);
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || "读取失败");
+    userState = { name: data.name || "", profile: data.profile || "" };
+    $("#me-name").value = userState.name;
+    $("#me-profile").value = userState.profile;
+  } catch (e) {
+    toast(e.message || "加载失败");
+  }
+  refreshUserAvatar();
+}
+
+// 头像显示：有自定义头像走 GET /api/user/avatar（带时间戳破坏缓存）；无则 SVG 占位
+async function refreshUserAvatar() {
+  const img = $("#me-avatar");
+  const removeBtn = $("#me-remove-avatar");
+  const stamp = `?t=${Date.now()}`;
+  try {
+    const res = await fetch(`${USER_API}/avatar${stamp}`);
+    if (res.ok) {
+      img.src = `${USER_API}/avatar${stamp}`;
+      img.classList.remove("placeholder");
+      removeBtn.classList.remove("hidden");
+      return;
+    }
+  } catch {
+    /* fallthrough：兜底占位 */
+  }
+  img.src = USER_PLACEHOLDER;
+  img.classList.add("placeholder");
+  removeBtn.classList.add("hidden");
+}
+
+// 保存（照 Hana）：名字变了才提交 name、档案变了才提交 profile；都没变 toast「没有更改」
+async function saveMe() {
+  const btn = $("#me-save");
+  if (btn.disabled) return;
+  const name = $("#me-name").value.trim();
+  const profile = $("#me-profile").value;
+  const patch = {};
+  if (name !== userState.name) patch.name = name;
+  if (profile !== userState.profile) patch.profile = profile;
+  if (Object.keys(patch).length === 0) {
+    toast("没有更改");
+    return;
+  }
+  btn.disabled = true;
+  try {
+    const res = await fetch(USER_API, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(patch),
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || "保存失败");
+    toast("保存成功");
+    await loadUser(); // 刷新数据（头像/输入回填）
+  } catch (e) {
+    toast(e.message || "保存失败");
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// 移除用户头像（恢复 SVG 占位）
+async function removeUserAvatar() {
+  try {
+    const res = await fetch(`${USER_API}/avatar`, { method: "DELETE" });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || "移除失败");
+    await refreshUserAvatar();
+    toast("已移除头像");
+  } catch (e) {
+    toast(e.message || "移除失败");
+  }
+}
+
+// tab 切换：「我」/「助手们」；import 按钮只属于「助手们」视图
+function setTab(tab) {
+  const isMe = tab === "me";
+  $("#tab-me").classList.toggle("hidden", !isMe);
+  $("#tab-agents").classList.toggle("hidden", isMe);
+  $("#import-hana-btn").classList.toggle("hidden", isMe);
+  document.querySelectorAll(".page-tab").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.tab === tab);
+  });
+  if (isMe) loadUser(); // 每次进入「我」都拉最新数据（保存后回填也走这里）
 }
 
 function renderStack() {
@@ -1107,6 +1260,17 @@ $("#import-submit").addEventListener("click", runImport);
 $("#import-overlay").addEventListener("click", (e) => {
   if (e.target === $("#import-overlay")) closeImportOverlay();
 });
+
+// 「我」tab（Phase 5）：tab 切换 + 头像（复用裁剪器）+ 名字/档案保存
+document.querySelectorAll(".page-tab").forEach((btn) => {
+  btn.addEventListener("click", () => setTab(btn.dataset.tab));
+});
+$("#me-avatar-wrap").addEventListener("click", openUserAvatarPicker);
+$("#me-remove-avatar").addEventListener("click", (e) => {
+  e.stopPropagation(); // 防止冒泡触发头像选择
+  removeUserAvatar();
+});
+$("#me-save").addEventListener("click", saveMe);
 
 // 移除头像（Phase 3）
 $("#remove-avatar-btn").addEventListener("click", removeAvatar);

@@ -12,10 +12,17 @@
   <header class="page-head">
     <div class="page-head-text">
       <h1>助手配置</h1>
-      <p class="page-sub">卡片横向排布 · 点击切换 · 点击已选卡片换头像 · 删除/设主助手/排序</p>
+      <p class="page-sub">管理你的助手与用户档案 · 配置修改在新会话生效</p>
+      <nav class="page-tabs" aria-label="视图切换">
+        <button id="tab-btn-me" class="page-tab" type="button" data-tab="me">我</button>
+        <button id="tab-btn-agents" class="page-tab active" type="button" data-tab="agents">助手们</button>
+      </nav>
     </div>
     <button id="import-hana-btn" class="btn btn-ghost page-import-btn" type="button">⇄ 从 Hana 转移</button>
   </header>
+
+  <!-- ========== 「助手们」视图（原有页面，默认显示） ========== -->
+  <div id="tab-agents" class="tab-view">
 
   <!-- 卡片堆叠区 -->
   <section class="stack-zone">
@@ -124,6 +131,41 @@
     </div>
     <div id="experience-paused" class="experience-paused hidden">经验已暂停。已有内容会保留，但助手不能读取或记录经验。</div>
     <div id="experience-categories" class="experience-categories"></div>
+  </section>
+  </div><!-- /tab-agents -->
+
+  <!-- ========== 「我」视图（Hana 同款：头像 → 名字 → 用户档案 → 保存） ========== -->
+  <section id="tab-me" class="tab-view hidden" aria-label="我">
+    <div class="me-card">
+      <!-- 常驻提示条（Phase 5）：用户配置修改后新会话生效，当前会话不受影响（dsh 机制） -->
+      <div class="session-note" role="note">
+        <strong>用户配置修改后，新建会话生效</strong>，当前会话不受影响。
+      </div>
+
+      <!-- 居中头像：点击更换；无头像显示 SVG 人形占位；hover 显示「更改头像」遮罩 -->
+      <div class="me-avatar-wrap" id="me-avatar-wrap" title="点击更换头像">
+        <img id="me-avatar" class="me-avatar" alt="用户头像">
+        <div class="me-avatar-mask">更改头像</div>
+        <button id="me-remove-avatar" class="remove-avatar-btn hidden" type="button" title="移除头像">✕</button>
+      </div>
+
+      <div class="field-block">
+        <label class="field-label" for="me-name">名字</label>
+        <input id="me-name" class="me-name-input" type="text" maxlength="24" autocomplete="off" placeholder="Ta 怎么称呼你">
+        <div class="field-hint">Ta 怎么称呼你</div>
+      </div>
+
+      <div class="field-block">
+        <label class="field-label" for="me-profile">用户档案</label>
+        <textarea id="me-profile" class="text-area rows-8" placeholder="让助手了解你：兴趣、习惯、偏好等，会注入到系统提示词中"></textarea>
+        <div class="field-hint">让助手了解你：兴趣、习惯、偏好等，会注入到系统提示词中</div>
+      </div>
+
+      <div class="save-row me-save-row">
+        <button id="me-save" class="btn btn-primary">保存</button>
+        <span id="me-save-status" class="save-status"></span>
+      </div>
+    </div>
   </section>
 </main>
 

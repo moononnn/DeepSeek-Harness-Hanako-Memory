@@ -53,3 +53,26 @@ export function resolveProfileDir(dshHome: string | undefined, profile: string):
     experienceIndex: join(root, "experience", "experience.md"),
   };
 }
+
+/* ------------------------------------------------------------------ */
+/* 全局用户路径（「我」页面，与 profile 数据平级、天然全局）                  */
+/* ------------------------------------------------------------------ */
+
+export interface UserPaths {
+  /** <dshHome>/assistant-soul/user.yaml（name + profile） */
+  yaml: string;
+  /** <dshHome>/assistant-soul/user-avatar.png */
+  avatar: string;
+}
+
+/**
+ * 解析全局用户文件路径。home 解析逻辑与 resolveProfileDir 完全一致：
+ * 显式配置 > $DSH_HOME 环境变量 > ~/.dsh；多 dshHome 场景下 user.yaml 跟着 home 走。
+ */
+export function resolveUserPaths(dshHome: string | undefined): UserPaths {
+  const home = dshHome && dshHome.trim().length > 0 ? resolveDshHome(dshHome) : resolveDshHome();
+  return {
+    yaml: join(home, "assistant-soul", "user.yaml"),
+    avatar: join(home, "assistant-soul", "user-avatar.png"),
+  };
+}

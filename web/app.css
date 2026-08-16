@@ -13,6 +13,28 @@
   --danger: #8b2c1f;
   --overlay-strong: rgba(42, 38, 34, 0.35);
   --card-size: 62px;
+
+  /* dsh 设计变量别名兜底：面板是 iframe 独立文档，CSS 变量不跨文档继承，
+     这里自行定义（值映射现有米色系），新样式统一引用 --dsw-alias-*。 */
+  --dsw-alias-bg-base: var(--bg);
+  --dsw-alias-bg-layer-1: #ffffff;
+  --dsw-alias-bg-layer-2: var(--bg-card);
+  --dsw-alias-bg-overlay: var(--bg-card);
+  --dsw-alias-bg-mask-photo: rgba(42, 38, 34, 0.4);
+  --dsw-alias-label-primary: var(--text);
+  --dsw-alias-label-secondary: var(--text-light);
+  --dsw-alias-label-tertiary: var(--text-muted);
+  --dsw-alias-label-dimmed: var(--text-muted);
+  --dsw-alias-brand-primary: var(--accent);
+  --dsw-alias-brand-primary-invert: #ffffff;
+  --dsw-alias-border-l1: var(--border);
+  --dsw-alias-border-l2: var(--border);
+  --dsw-alias-button-primary-fill: var(--accent);
+  --dsw-alias-button-primary-hover: var(--accent-hover);
+  --dsw-alias-button-ghost-fill: transparent;
+  --dsw-alias-interactive-bg-hover: rgba(42, 38, 34, 0.06);
+  --dsw-alias-state-error-primary: var(--danger);
+  --dsw-alias-state-success-primary: #2e7d4f;
 }
 
 * { box-sizing: border-box; }
@@ -838,3 +860,109 @@ html, body {
 .import-result .rr { font-size: 12.5px; color: var(--text); padding: 7px 10px; background: var(--bg); border-radius: 10px; line-height: 1.6; }
 .import-result .rr.err { background: rgba(139, 44, 31, 0.07); color: var(--danger); }
 .import-empty { padding: 20px; text-align: center; font-size: 12.5px; color: var(--text-muted); }
+
+/* ================================================================ */
+/* Phase 5：「我」tab（Hana 同款：头像 → 名字 → 用户档案 → 保存）          */
+/* 样式全部引用 --dsw-alias-* 设计变量（:root 有兜底定义）                */
+/* ================================================================ */
+
+/* ---------- 页头 tab 导航 ---------- */
+.page-tabs {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+.page-tab {
+  padding: 6px 20px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 999px;
+  background: var(--dsw-alias-button-ghost-fill);
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.page-tab:hover {
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+.page-tab.active {
+  background: var(--dsw-alias-button-primary-fill);
+  border-color: var(--dsw-alias-button-primary-fill);
+  color: var(--dsw-alias-brand-primary-invert);
+}
+
+.tab-view { margin-top: 20px; }
+
+/* ---------- 「我」卡片 ---------- */
+.me-card {
+  background: var(--dsw-alias-bg-layer-2);
+  border: 1px solid var(--dsw-alias-border-l1);
+  border-radius: 16px;
+  padding: 24px 22px 26px;
+}
+
+/* 居中头像：点击更换；hover 显示「更改头像」遮罩；无头像 SVG 占位 */
+.me-avatar-wrap {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 22px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.me-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--dsw-alias-border-l2);
+  background: var(--dsw-alias-bg-layer-1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  display: block;
+}
+.me-avatar.placeholder {
+  padding: 20px; /* SVG 人形占位：图标内缩，描边居中 */
+  object-fit: contain;
+  box-sizing: border-box;
+}
+.me-avatar-mask {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--dsw-alias-bg-mask-photo);
+  color: var(--dsw-alias-brand-primary-invert);
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.18s;
+  pointer-events: none; /* 不拦截底下 ✕ 按钮的点击 */
+}
+.me-avatar-wrap:hover .me-avatar-mask { opacity: 1; }
+
+/* 名字输入 */
+.me-name-input {
+  width: 100%;
+  max-width: 320px;
+  padding: 8px 12px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  background: var(--dsw-alias-bg-layer-1);
+  color: var(--dsw-alias-label-primary);
+  outline: none;
+}
+.me-name-input:focus { border-color: var(--dsw-alias-brand-primary); }
+
+/* 用户档案 textarea 8 行 */
+.rows-8 { min-height: 180px; }
+
+/* 保存行：底部居中 */
+.me-save-row {
+  justify-content: center;
+  margin-top: 22px;
+}
