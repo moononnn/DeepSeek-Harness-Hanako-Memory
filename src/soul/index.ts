@@ -23,6 +23,7 @@ import { formatPinned, formatMemorySnapshot, registerMemoryTicker } from "./memo
 import { readExperienceIndex } from "./experience.js";
 import { readUserYaml, readUserProfile, resolveUserName } from "./user.js";
 import { registerTools } from "./tools.js";
+import { registerToolTalk } from "./tool-talk.js";
 
 /** dsh-agent-default-model 服务最小形状（base 组合已挂载，与 manager http.ts 同款姿势）。 */
 interface AgentDefaultModelLike {
@@ -35,7 +36,8 @@ declare module "@deepseek-ai/cordis" {
 }
 
 export const name = "assistant-soul";
-export const inject = ["tools", "systemPrompt", "llm", "agentDefaultModel"];
+// presenter 要装到每个 root agent.ctx，才能用宿主的 Agent 对象解析工具作用域。
+export const inject = ["agents", "tools", "systemPrompt", "llm", "agentDefaultModel"];
 
 export const Config = z.object({
   /** profile 目录名，唯一标识一个助手（决定记忆/经验数据目录）。 */
@@ -72,6 +74,8 @@ export const Config = z.object({
   experience: z.object({
     enabled: z.boolean().default(true),
   }),
+  /** 拟人工具卡：工具调用标题渲染成「{助手名} 动作短语」（Hana 风格）。 */
+  toolTalk: z.boolean().default(true),
 });
 
 export type SoulConfig = {
@@ -91,6 +95,7 @@ export type SoulConfig = {
     deepMemory: boolean;
   };
   experience: { enabled: boolean };
+  toolTalk: boolean;
 };
 
 /**
@@ -180,6 +185,26 @@ export function apply(ctx: Context, config: SoulConfig): void {
 
   /* ③ 工具（按开关） */
   registerTools(ctx, config, paths);
+
+  /* ③½ 拟人工具卡（Hana 风格工具标题；工具执行与 schema 原样保留，只覆盖展示）
+     presenter 要安装到每个 root agent.ctx：宿主 api-proxy 用 Agent 对象解析
+     presenter scope，直接装在 preset standing 层会被静态 bundle 的作用域副本隔开。 */
+  const talkOptions = { name: config.name, enabled: config.toolTalk };
+  const agents = (ctx as Context & {
+    agents?: { roots?: () => Array<{ ctx?: Context }> };
+  }).agents;
+  const installAgentTalk = (agent: { ctx?: Context } | undefined) => {
+    if (agent?.ctx) registerToolTalk(agent.ctx, talkOptions);
+  };
+  if (agents?.roots && typeof ctx.on === "function") {
+    for (const agent of agents.roots()) installAgentTalk(agent);
+    ctx.on("agent/created", ({ agent }: { agent: { ctx?: Context } }) => {
+      installAgentTalk(agent);
+    });
+  } else {
+    // 兼容极简测试 ctx，以及插件被直接挂到 agent.ctx 的组合。
+    registerToolTalk(ctx, talkOptions);
+  }
 
   /* ④ 记忆调度器（轮数触发滚动摘要 + 每日任务分层编译 + Deep Memory，不阻塞回合） */
   if (config.memory.enabled) {

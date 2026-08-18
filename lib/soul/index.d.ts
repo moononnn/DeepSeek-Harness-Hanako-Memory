@@ -90,6 +90,8 @@ export declare const Config: z<Schemastery.ObjectS<{
     }>, Schemastery.ObjectT<{
         enabled: z<boolean, boolean>;
     }>>;
+    /** 拟人工具卡：工具调用标题渲染成「{助手名} 动作短语」（Hana 风格）。 */
+    toolTalk: z<boolean, boolean>;
 }>, Schemastery.ObjectT<{
     /** profile 目录名，唯一标识一个助手（决定记忆/经验数据目录）。 */
     profile: z<string, string>;
@@ -149,6 +151,8 @@ export declare const Config: z<Schemastery.ObjectS<{
     }>, Schemastery.ObjectT<{
         enabled: z<boolean, boolean>;
     }>>;
+    /** 拟人工具卡：工具调用标题渲染成「{助手名} 动作短语」（Hana 风格）。 */
+    toolTalk: z<boolean, boolean>;
 }>>;
 export type SoulConfig = {
     profile: string;
@@ -172,6 +176,7 @@ export type SoulConfig = {
     experience: {
         enabled: boolean;
     };
+    toolTalk: boolean;
 };
 export declare function apply(ctx: Context, config: SoulConfig): void;
 export {};

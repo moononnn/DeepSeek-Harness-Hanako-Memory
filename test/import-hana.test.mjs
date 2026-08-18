@@ -78,12 +78,12 @@ test("listHanaSources：扫描含 AGENTS.md 的助手", () => {
   const root = tempRoot();
   try {
     buildFakeHanaAgent(root, { id: "hanako", name: "小花", yuan: "hanako", expFiles: 12, pins: 3 });
-    buildFakeHanaAgent(root, { id: "yumi", name: "悠米", yuan: "butter", expFiles: 5, pins: 1 });
+    buildFakeHanaAgent(root, { id: "butter", name: "阿布", yuan: "butter", expFiles: 5, pins: 1 });
     mkdirSync(join(root, "no-agents"), { recursive: true }); // 无 AGENTS.md 不算
     writeFileSync(join(root, "no-agents", "config.yaml"), "agent:\n  name: 无关\n");
     const sources = listHanaSources(root);
     const ids = sources.map((s) => s.id);
-    assert.ok(ids.includes("hanako") && ids.includes("yumi"), `应有 hanako/yumi：${ids}`);
+    assert.ok(ids.includes("hanako") && ids.includes("butter"), `应有 hanako/butter：${ids}`);
     assert.ok(!ids.includes("no-agents"), "无 AGENTS.md 的目录不算助手");
     const hanako = sources.find((s) => s.id === "hanako");
     assert.equal(hanako.name, "小花");
@@ -117,9 +117,9 @@ test("matchTarget：id 相同 / name 相同 → update；无匹配 → create", 
 `);
     assert.equal(matchTarget(paths.presetsRoot, { id: "xiaohua", name: "任意" }).mode, "update");
     assert.equal(matchTarget(paths.presetsRoot, { id: "hanako", name: "小花" }).mode, "update");
-    const created = matchTarget(paths.presetsRoot, { id: "yumi", name: "悠米" });
+    const created = matchTarget(paths.presetsRoot, { id: "butter", name: "阿布" });
     assert.equal(created.mode, "create");
-    assert.equal(created.id, "yumi");
+    assert.equal(created.id, "butter");
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -172,28 +172,28 @@ test("importFromHana：create 场景（指定 id 新建 / yuan 跟随源 / 开�
   const root = tempRoot();
   try {
     const agentsRoot = join(root, "agents");
-    buildFakeHanaAgent(agentsRoot, { id: "yumi", name: "悠米", yuan: "butter", expFiles: 5, pins: 1 });
+    buildFakeHanaAgent(agentsRoot, { id: "butter", name: "阿布", yuan: "butter", expFiles: 5, pins: 1 });
     const paths = resolveManagerPaths(join(root, "dsh-home"));
     seedXiaohua(paths.presetsRoot, paths.soulRoot);
 
-    const result = importFromHana(paths, agentsRoot, { id: "yumi", name: "悠米", yuan: "butter" }, true, false, undefined);
+    const result = importFromHana(paths, agentsRoot, { id: "butter", name: "阿布", yuan: "butter" }, true, false, undefined);
     assert.equal(result.target.mode, "create");
-    assert.equal(result.target.id, "yumi");
+    assert.equal(result.target.id, "butter");
     assert.equal(result.avatar, "png");
     assert.equal(result.memory.files.length, 5);
     assert.equal(result.memory.pins, 1);
     assert.equal(result.experience, null, "不勾经验不写");
 
-    const cordis = readFileSync(join(paths.presetsRoot, "yumi", "agent.cordis.yml"), "utf8");
+    const cordis = readFileSync(join(paths.presetsRoot, "butter", "agent.cordis.yml"), "utf8");
     const rows = yamlLoad(cordis);
-    assert.equal(rows[0].config.profile, "yumi");
-    assert.equal(rows[0].config.name, "悠米");
+    assert.equal(rows[0].config.profile, "butter");
+    assert.equal(rows[0].config.name, "阿布");
     assert.equal(rows[0].config.yuan, "butter");
     assert.equal(rows[0].config.memory.enabled, true);
     assert.equal(rows[0].config.experience.enabled, false, "不勾经验 → 开关关");
-    const preset = readFileSync(join(paths.presetsRoot, "yumi", "preset.yml"), "utf8");
+    const preset = readFileSync(join(paths.presetsRoot, "butter", "preset.yml"), "utf8");
     assert.match(preset, /order: \d+/);
-    assert.ok(existsSync(join(paths.soulRoot, "yumi")), "soul 数据目录已建");
+    assert.ok(existsSync(join(paths.soulRoot, "butter")), "soul 数据目录已建");
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
