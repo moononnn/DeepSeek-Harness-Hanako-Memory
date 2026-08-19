@@ -1,6 +1,6 @@
-# 🎭 dsh 助手管理（dsh-assistant-manager）
+# 🧠 小花记忆（DeepSeek Harness）
 
-> 把 Hana 的「助手配置界面」整个搬进 DeepSeek Harness，用网页管理你的助手预设。
+> 把 Hana 的记忆系统与助手配置整个搬进 DeepSeek Harness，用网页管理你的助手预设。
 >
 > **作者：moononnn & 小花**
 
@@ -54,7 +54,7 @@
 dsh 插件标准姿势，一行命令（推荐从 GitHub 装，发布到 npm 后也可用 npm 包名）：
 
 ```bash
-dsh plugin --profile web add github:moononnn/dsh-assistant-manager
+dsh plugin --profile web add github:moononnn/DeepSeek-Harness-Hanako-Memory
 ```
 
 装完重启 dsh → 侧栏底部出现 👥「助手」按钮（或直接访问 `http://127.0.0.1:3080/assistant-manager/`）。
@@ -69,13 +69,13 @@ dsh plugin --profile web add github:moononnn/dsh-assistant-manager
 
 ```bash
 # 1. 克隆仓库
-$ git clone https://github.com/moononnn/dsh-assistant-manager
+$ git clone https://github.com/moononnn/DeepSeek-Harness-Hanako-Memory
 
 # 2. 安装依赖并构建
-$ cd dsh-assistant-manager && npm install && npm run build
+$ cd DeepSeek-Harness-Hanako-Memory && npm install && npm run build
 
 # 3. link 进你的 dsh profile（如 profiles/web/package.json）
-$ dsh plugin --profile web add link:/绝对路径/dsh-assistant-manager
+$ dsh plugin --profile web add link:/绝对路径/DeepSeek-Harness-Hanako-Memory
 ```
 
 > 如果安装不生效，检查包的 `package.json` 是否有 `dsh.bundle` 声明——没有它 dsh 启动会直接崩，这是 dsh 的硬性要求。
