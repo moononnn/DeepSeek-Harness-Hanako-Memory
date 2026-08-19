@@ -2,6 +2,13 @@
 
 本项目所有值得记录的变更都会列在这里。格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.4.1] - 2026-08-19
+
+### 修复
+
+- **README 修正**：标题统一为「小花记忆（DeepSeek Harness）」，与仓库名一致；安装命令 / 克隆 / 本地开发命令全部从已不存在的 dsh-assistant-manager 仓库修正为 DeepSeek-Harness-Hanako-Memory（此前用户照 README 安装会失败）
+- **README 互推**：新增「想让 Ta 更活泼一点？」小节，推荐搭配表情包插件（DeepSeek-Harness-biaoqingbao）使用，每位助手单独设置自动联动
+
 ## [0.4.0] - 2026-08-18
 
 ### 新增
