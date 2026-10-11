@@ -2,6 +2,13 @@
 
 本项目所有值得记录的变更都会列在这里。格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.4.2] - 2026-10-11
+
+### 修复
+
+- **从 GitHub 安装时缺少 `cordis.patch.yml`（issue #1）**：`package.json` 的 `files` 白名单只列了 `lib` / `client` / `assets` / `templates` / `web`，而 `dsh.bundle.patch` 指向的 `./cordis.patch.yml` 位于包根目录，不在白名单里。dsh 从 GitHub 装插件时按 `files` 白名单取包，装完的目录里根本没有这个文件，插件插入 profile 图层时直接失败（dsh 启动崩）。现在把 `cordis.patch.yml` 加进 `files`，并在 `exports` 里显式导出该子路径，同时把 `README.md` / `LICENSE` 一并纳入，保证安装包与仓库内容一致。
+  - 本地已用 `npm pack --dry-run` 核对产物：0.4.2 的 tarball 含 `cordis.patch.yml`（306 B）、`README.md`、`LICENSE`，共 89 个文件。
+
 ## [0.4.1] - 2026-08-19
 
 ### 修复
